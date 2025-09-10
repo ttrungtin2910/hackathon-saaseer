@@ -1,1 +1,1 @@
-"""Test package for Contract Management API"""
+# Test package

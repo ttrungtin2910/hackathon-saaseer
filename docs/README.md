@@ -1,265 +1,281 @@
-# Contract Management API
+# SaaSeer Contract Management API
 
-Enterprise-grade backend Python API để lưu trữ và truy vấn hợp đồng sử dụng CosmosDB, Azure Blob Storage, và LangGraph OpenAI.
+A FastAPI backend application for managing contract information with Azure Cosmos DB storage.
 
-## 🏗️ Cấu trúc dự án
+## Features
+
+- ✅ Create, read, update, and delete contracts
+- ✅ Store contract data in Azure Cosmos DB
+- ✅ RESTful API with automatic documentation
+- ✅ Pydantic data validation
+- ✅ CORS support for web applications
+- ✅ Comprehensive error handling
+- ✅ Health check endpoints
+- ✅ Async/await support for high performance
+- ✅ Proper project structure and configuration management
+
+## Project Structure
 
 ```
-SaaSeer/
-├── app/                        # Main application package
+├── app/                     # Main application code
+│   ├── __init__.py         
+│   ├── models.py           # Pydantic data models
+│   ├── database.py         # Azure Cosmos DB operations
+│   └── routes.py           # API route definitions
+├── config/                 # Configuration management
 │   ├── __init__.py
-│   ├── main.py                 # FastAPI application entry point
-│   ├── config/                 # Configuration management
-│   │   ├── __init__.py
-│   │   └── settings.py         # Application settings
-│   ├── models/                 # Data models
-│   │   ├── __init__.py
-│   │   └── contract.py         # Pydantic models for contracts
-│   ├── services/               # Business logic services
-│   │   ├── __init__.py
-│   │   ├── azure_blob.py       # Azure Blob Storage service
-│   │   ├── cosmosdb.py         # CosmosDB service
-│   │   └── langgraph.py        # LangGraph OpenAI service
-│   ├── api/                    # API routes
-│   │   ├── __init__.py
-│   │   └── endpoints.py        # FastAPI endpoints
-│   └── utils/                  # Utility modules
-│       ├── __init__.py
-│       └── prompts.py          # AI prompts templates
-├── scripts/                    # Startup and utility scripts
-│   ├── start.py                # Development startup script
-│   └── start.bat               # Windows batch script
-├── tests/                      # Test package
-│   └── __init__.py
-├── requirements.txt            # Python dependencies
-├── README.md                   # This file
-├── .gitignore                  # Git ignore patterns
-└── .env.example               # Environment variables template
+│   └── settings.py         # Settings and environment variables
+├── tests/                  # Test files
+│   ├── __init__.py
+│   └── test_contract_api.py # API integration tests
+├── scripts/                # Utility scripts
+│   └── run_server.py       # Enhanced server startup script
+├── docs/                   # Documentation
+│   └── README.md           # This file
+├── main.py                 # FastAPI application entry point
+├── requirements.txt        # Python dependencies
+├── .env                   # Environment variables (configured)
+├── .env.example           # Environment variables template
+├── start_server.bat       # Windows startup script
+└── start_server.sh        # Linux/Mac startup script
 ```
 
-## ✨ Tính năng
+## Prerequisites
 
-- 🗄️ **Lưu trữ hợp đồng**: CosmosDB cho metadata, Azure Blob cho files
-- 🤖 **AI-powered analysis**: Tự động trích xuất thông tin hợp đồng
-- 🔍 **Web search integration**: Tìm dịch vụ tương tự bằng SerpAPI
-- 📊 **Intelligent reporting**: Báo cáo tổng hợp thông minh
-- 🚀 **RESTful API**: FastAPI với documentation tự động
-- 🏢 **Enterprise-ready**: Cấu trúc code chuẩn, scalable
+- Python 3.8+
+- Azure Cosmos DB account
+- pip or conda package manager
+- Conda environment 'py12' (recommended)
 
-## 🗄️ Database Schema
+## Quick Start
 
-### CosmosDB Collections
+### 1. Installation
 
-#### ContractInformation
-- `id`: Document ID (auto-generated)
-- `ContractID`: Contract identifier (UUID)
-- `UserName`: User name
-- `ContractFilePath`: Azure Blob URL
-- `StartDate`: Contract start date
-- `EndDate`: Contract end date
-- `Provider`: Service provider
-- `Service`: Service type
-- `RenewalStatus`: Renewal status
-
-#### UserRequirement
-- `id`: Document ID (auto-generated)
-- `UserRequirementID`: Requirement identifier (UUID)
-- `UserRequirementContent`: Requirement content
-- `ContractID`: Related contract ID
-
-## 📡 API Endpoints
-
-### 1. List contracts
-```http
-GET /api/v1/contracts/{username}
-```
-
-### 2. Upload contract
-```http
-POST /api/v1/contracts/upload
-Content-Type: multipart/form-data
-
-Body:
-- username: string (form data)
-- file: file (PDF, JPG, PNG)
-```
-
-### 3. Search contracts
-```http
-POST /api/v1/contracts/search
-Content-Type: application/json
-
-{
-  "UserName": "string",
-  "ContractID": "string", 
-  "UserRequirementContent": "string"
-}
-```
-
-### 4. Get contract requirements
-```http
-GET /api/v1/contracts/{contract_id}/requirements
-```
-
-### 5. Download contract file
-```http
-GET /api/v1/contracts/{contract_id}/download
-```
-
-### 6. Health check
-```http
-GET /api/v1/health
-```
-
-## 🚀 Cài đặt và Chạy
-
-### 1. Clone repository
 ```bash
-git clone <repository-url>
-cd SaaSeer
-```
+# Clone or download the project files
+# Navigate to the project directory
 
-### 2. Tạo conda environment
-```bash
-conda create -n contract python=3.11
-conda activate contract
-```
-
-### 3. Cài đặt dependencies
-```bash
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 4. Cấu hình Environment Variables
+### 2. Configuration
 
-Copy template và cập nhật với thông tin thực:
+The `.env` file has been configured with your Azure Cosmos DB credentials:
+- Database: `ContractManagement`
+- Endpoint: `https://fjp-bachan-cosmosdb-dev.documents.azure.com:443/`
 
+### 3. Run the Application
+
+#### Option 1: Using startup scripts (recommended)
 ```bash
-# Copy template (Windows)
-copy .env.example .env
+# On Windows
+start_server.bat
 
-# Copy template (Linux/Mac)  
-cp .env.example .env
+# On Linux/Mac
+chmod +x start_server.sh
+./start_server.sh
 ```
 
-Cập nhật `.env` với thông tin thực:
-
-```env
-# CosmosDB Configuration
-COSMOS_ENDPOINT=https://your-cosmos-account.documents.azure.com:443/
-COSMOS_KEY=your-cosmos-primary-key
-COSMOS_DATABASE_NAME=ContractManagement
-
-# Azure Blob Storage Configuration
-AZURE_SA_URL=https://your-storage-account.blob.core.windows.net/
-AZURE_SA_KEY=your-storage-account-key
-AZURE_CONTAINER_NAME=contracts
-
-# Azure OpenAI Configuration
-PROVIDER_NAME=azure_openai
-AZURE_OPENAI_API_KEY=your-azure-openai-api-key
-AZURE_OPENAI_ENDPOINT=https://your-endpoint.openai.azure.com/
-OPENAI_API_VERSION=2024-12-01-preview
-OPENAI_MODEL_NAME=gpt-4o-mini
-OPENAI_TIME_OUT=10
-AZ_OPENAI_TEMP=0.3
-AZ_MAX_TOKEN=1000
-
-# Legacy OpenAI Configuration (fallback)
-OPENAI_API_KEY=your-openai-api-key
-OPENAI_MODEL=gpt-4
-
-# Application Configuration
-APP_HOST=0.0.0.0
-APP_PORT=8000
-APP_DEBUG=True
-
-# SerpAPI Configuration
-SERPAPI_API_KEY=your-serpapi-key
-```
-
-### 5. Chạy ứng dụng
-
-#### Development với conda
+#### Option 2: Using enhanced Python script
 ```bash
-conda activate contract
-python scripts/start.py
+# Activate conda environment first
+conda activate py12
+
+# Run enhanced startup script
+python scripts/run_server.py
 ```
 
-#### Windows batch script
+#### Option 3: Direct execution
 ```bash
-scripts\start.bat
+# Activate conda environment
+conda activate py12
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Start the server
+python main.py
 ```
 
-#### Production với uvicorn
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
-
-### 6. Truy cập API Documentation
-- **Swagger UI**: http://localhost:8000/docs
+The API will be available at:
+- **API**: http://localhost:8000
+- **Interactive Docs**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
-- **Health Check**: http://localhost:8000/api/v1/health
 
-## 🔄 Quy trình hoạt động
+## API Endpoints
 
-### Upload hợp đồng:
-1. User upload file → Azure Blob Storage
-2. LangGraph OpenAI phân tích nội dung file
-3. Trích xuất thông tin hợp đồng tự động
-4. Lưu metadata vào CosmosDB
+### Contract Operations
 
-### Search & Report:
-1. Lưu yêu cầu user vào UserRequirement table
-2. SerpAPI tìm kiếm dịch vụ tương tự trên web
-3. LangGraph tạo báo cáo tổng hợp thông minh
-4. Trả về kết quả chi tiết
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/contracts/` | Create a new contract |
+| POST | `/api/v1/contracts/quick-create` | Quick create (accepts raw format) |
+| GET | `/api/v1/contracts/{contract_id}` | Get contract by ID |
+| PUT | `/api/v1/contracts/{contract_id}` | Update contract |
+| DELETE | `/api/v1/contracts/{contract_id}` | Delete contract |
+| GET | `/api/v1/contracts/` | List user's contracts |
 
-## 🏢 Enterprise Features
+### Health Check
 
-- **Modular Architecture**: Tách biệt concerns, dễ maintain
-- **Service Layer**: Business logic được tổ chức trong services
-- **Type Safety**: Pydantic models cho data validation
-- **Error Handling**: Comprehensive exception handling
-- **Logging**: Structured logging across all modules
-- **Testing Ready**: Test package structure prepared
-- **Docker Ready**: Easy containerization
-- **CI/CD Friendly**: Standard Python project structure
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | General health check |
+| GET | `/api/v1/contracts/health/status` | Contract service health |
 
-## 🧪 Development
+## Usage Examples
 
-### Project Structure Benefits
-- **Separation of Concerns**: API, models, services tách biệt
-- **Import Management**: Clean imports với __init__.py
-- **Scalability**: Dễ thêm features mới
-- **Testing**: Test structure sẵn sàng
-- **Deployment**: Production-ready structure
+### Create a Contract
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/contracts/quick-create" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "contract_details": "所在地: 東京都港区三田三丁目５番１９号、面積: 5.19㎡(1.57坪)、月額金123,550円、支払期日: 翌月分を毎月20日までに支払",
+       "contract_end_date": "2028/06/30",
+       "contract_start_date": "2025/09/01",
+       "customer_name": "ＦＰＴジャパンホールディングス株式会社",
+       "id": "c5d847a2-6fde-41d4-aaf3-b676ad3f8151",
+       "LinkImage": "https://fptsoftware362-my.sharepoint.com/:b:/g/personal/tintt33_fpt_com/Efm3DWFRE89GqTJAnB7OV1UBzMiHtO3c_DQXlMbw5y7Udw",
+       "service_name": "防災備蓄倉庫",
+       "supplier_name": "住友不動産株式会社",
+       "termination_notice_period": "契約期間満了の1年前から6ヶ月前まで",
+       "UserEmail": "tintt33@fpt.com"
+     }'
+```
+
+### Get a Contract
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/contracts/c5d847a2-6fde-41d4-aaf3-b676ad3f8151?user_email=tintt33@fpt.com"
+```
+
+### Test the API
+
+```bash
+# Run the integration test
+python tests/test_contract_api.py
+```
+
+## Data Model
+
+### Contract Data Structure
+
+```json
+{
+  "id": "string (UUID)",
+  "contract_details": "string (Japanese text with location, area, amount, payment info)",
+  "contract_end_date": "string (YYYY/MM/DD format)",
+  "contract_start_date": "string (YYYY/MM/DD format)", 
+  "customer_name": "string (Company name in Japanese)",
+  "LinkImage": "string (URL to contract document)",
+  "service_name": "string (Service name in Japanese)",
+  "supplier_name": "string (Supplier company name in Japanese)",
+  "termination_notice_period": "string (Notice period in Japanese)",
+  "UserEmail": "string (Email address - used as partition key)",
+  "created_at": "datetime (Auto-generated)",
+  "updated_at": "datetime (Auto-updated)"
+}
+```
+
+## Azure Cosmos DB Configuration
+
+The application is configured to use your Azure Cosmos DB:
+- **Endpoint**: `https://fjp-bachan-cosmosdb-dev.documents.azure.com:443/`
+- **Database**: `ContractManagement`
+- **Container**: `contracts`
+- **Partition Key**: `/UserEmail`
+
+The application will automatically create the database and container if they don't exist.
+
+## Configuration Management
+
+Configuration is handled through the `config/settings.py` module using Pydantic settings:
+
+- Environment variables are loaded from `.env` file
+- Settings are validated and type-checked
+- Default values are provided for optional settings
+- Settings can be dependency-injected in FastAPI routes
+
+## Development
 
 ### Adding New Features
-1. **Models**: Add to `app/models/`
-2. **Services**: Add to `app/services/`
-3. **APIs**: Add to `app/api/`
-4. **Utils**: Add to `app/utils/`
 
-## 📋 Requirements
+1. Define new models in `app/models.py`
+2. Add database operations in `app/database.py`
+3. Create new routes in `app/routes.py`
+4. Include routes in `main.py`
+5. Add tests in `tests/`
 
-- **Python**: 3.11+
-- **Azure**: CosmosDB + Blob Storage accounts
-- **OpenAI**: API key for GPT-4
-- **SerpAPI**: API key for web search
-- **Conda**: For environment management
+### Running Tests
 
-## 🎯 Production Deployment
+```bash
+# Run API integration tests
+python tests/test_contract_api.py
 
-1. **Environment**: Cập nhật production credentials
-2. **Security**: Configure CORS, authentication
-3. **Monitoring**: Add application monitoring
-4. **Scaling**: Consider container orchestration
-5. **Backup**: Setup database backup strategies
+# For unit tests (add pytest tests in tests/ directory)
+pytest tests/
+```
 
-## 📞 Support
+## Production Deployment
 
-- **Documentation**: Check `/docs` endpoint
-- **Health Check**: Monitor `/api/v1/health`
-- **Logs**: Application logs for debugging
-- **Structure**: Follow established patterns for new features
+1. Set `DEBUG=false` in environment variables
+2. Configure proper CORS origins in settings
+3. Use a production WSGI server like Gunicorn
+4. Set up proper logging and monitoring
+5. Configure Azure Cosmos DB with appropriate throughput
+
+```bash
+# Production run example
+gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+```
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `APP_NAME` | Application name | `SaaSeer Contract Management API` |
+| `APP_VERSION` | Application version | `1.0.0` |
+| `DEBUG` | Debug mode | `true` |
+| `ENVIRONMENT` | Environment | `development` |
+| `HOST` | Server host | `0.0.0.0` |
+| `PORT` | Server port | `8000` |
+| `COSMOS_ENDPOINT` | Azure Cosmos DB endpoint URL | Required |
+| `COSMOS_KEY` | Azure Cosmos DB primary key | Required |
+| `COSMOS_DATABASE_NAME` | Database name | `ContractManagement` |
+| `COSMOS_CONTAINER_NAME` | Container name | `contracts` |
+| `LOG_LEVEL` | Logging level | `INFO` |
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Cosmos DB Connection Failed**
+   - Check endpoint URL and primary key in `.env`
+   - Verify network connectivity
+   - Ensure Cosmos DB account is active
+
+2. **Module Import Errors**
+   - Ensure you're in the project root directory
+   - Activate the correct conda environment: `conda activate py12`
+   - Install dependencies: `pip install -r requirements.txt`
+
+3. **Permission Denied**
+   - Verify Cosmos DB key has read/write permissions
+   - Check container permissions
+
+4. **Validation Errors**
+   - Ensure all required fields are provided
+   - Check data types match the model definition
+
+### Logging
+
+The application logs important events and errors. Check the console output or configure file logging for production use.
+
+## License
+
+MIT License - see LICENSE file for details.
+
+## Support
+
+For support, contact FPT Software team or create an issue in the project repository.

@@ -128,21 +128,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Project specific
-*.zip
-*.tar.gz
-*.rar
-data.zip
-
-# Logs
-logs/
-*.log
-evaluation_log.txt
-
-# Excel files (evaluation results)
-*_evaluation_results.xlsx
-evaluation_results.json
-
 # IDE
 .vscode/
 .idea/
@@ -152,4 +137,41 @@ evaluation_results.json
 
 # OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+
+# Project specific
+*.log
+logs/
+temp/
+tmp/
+
+# Azure
+.azure/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Test files
+test_*.py
+*_test.py
+tests/temp/
+
+# Documentation build
+docs/build/
+docs/_build/
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Temporary files
+*.tmp
+*.temp
