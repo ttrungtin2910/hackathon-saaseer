@@ -2,6 +2,9 @@ from fastapi import APIRouter, HTTPException, Query, Path, Request
 from typing import List, Optional
 from app.models import ContractData, ContractResponse, ContractUpdateData
 from app.database import cosmos_db
+from config.settings import get_settings
+from datetime import datetime, timedelta
+import os
 import logging
 import json
 
@@ -210,3 +213,137 @@ async def health_check():
         "service": "contracts",
         "message": "Contract service is running"
     }
+
+
+@router.get("/alerts/expiring", response_model=dict)
+async def alert_expiring_contracts(
+    user_email: str = Query(..., description="User email to filter contracts")
+):
+    """
+    Check user's contracts and return alerts for those near expiry or missing end date.
+    Returns list of dicts with fields: expired_status, report, contract_id.
+    """
+    try:
+        settings = get_settings()
+        # 1) Fetch contracts by user
+        result = await cosmos_db.list_contracts_by_user(user_email, limit=1000)
+        if not result.get("success"):
+            raise HTTPException(status_code=500, detail=result.get("message", "Failed to list contracts"))
+        contracts = result.get("data", [])
+
+        # Helper: parse date in formats YYYY/MM/DD or ISO
+        def parse_date(value: Optional[str]) -> Optional[datetime]:
+            if not value:
+                return None
+            for fmt in ("%Y/%m/%d", "%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%S.%f"):
+                try:
+                    return datetime.strptime(value, fmt)
+                except Exception:
+                    continue
+            return None
+
+        # OpenAI config
+        openai_key = settings.openai_api_key
+        model = settings.openai_model
+        use_ai = bool(openai_key)
+        expiry_window_days = int(settings.expiry_warning_days)
+        now = datetime.utcnow()
+        window_end = now + timedelta(days=expiry_window_days)
+
+        from textwrap import dedent
+
+        def build_search_prompt(contract: dict) -> str:
+            # Aggregate contract info into a concise context for web search
+            fields = {
+                "Service Name": contract.get("service_name"),
+                "Supplier": contract.get("supplier_name"),
+                "Customer": contract.get("customer_name"),
+                "Details": contract.get("contract_details"),
+                "Start Date": contract.get("contract_start_date"),
+                "End Date": contract.get("contract_end_date"),
+                "Termination Notice": contract.get("termination_notice_period"),
+            }
+            lines = [f"- {k}: {v}" for k, v in fields.items() if v]
+            context = "\n".join(lines)
+            template = dedent(
+                f"""
+                You are an analyst. Using web search, analyze the current contract context and propose alternatives.
+
+                Current contract context:\n{context}
+
+                Write a 500-800 word markdown report with these sections:
+                1. CURRENT CONTRACT OVERVIEW (analysis, strengths/limitations)
+                2. REQUIREMENTS ANALYSIS (user needs, current suitability)
+                3. SIMILAR SERVICES IN THE MARKET (comparison, pros/cons of each option)
+                4. RECOMMENDATIONS (most suitable solution, implementation roadmap)
+                Output only the report, no preface or meta text. Don't place in code block.
+                Please response as the context's language
+                """
+            ).strip()
+            return template
+
+        async def generate_report(contract: dict) -> str:
+            if not use_ai:
+                # Fallback stub if no API key configured
+                return (
+                    "## TỔNG QUAN HỢP ĐỒNG HIỆN TẠI\n\n"
+                    "(Bản xem trước vì thiếu OPENAI_API_KEY)\n\n"
+                    "## PHÂN TÍCH YÊU CẦU\n\n"
+                    "## DỊCH VỤ TƯƠNG TỰ TRÊN THỊ TRƯỜNG\n\n"
+                    "## KHUYẾN NGHỊ\n"
+                )
+            try:
+                # Lazy import to avoid hard dependency if key missing
+                from openai import OpenAI
+                client = OpenAI(api_key=openai_key)
+                prompt = build_search_prompt(contract)
+                response = client.responses.create(
+                    model=model,
+                    tools=[{"type": "web_search"}],
+                    input=prompt,
+                )
+                # API per user's snippet provides output_text
+                return getattr(response, "output_text", "") or ""
+            except Exception as e:
+                logger.error(f"AI report generation failed: {e}", exc_info=False)
+                return "(Không thể tạo báo cáo tự động lúc này.)"
+
+        results = []
+        for c in contracts:
+            end_dt = parse_date(c.get("contract_end_date"))
+            near_expiry = False
+            expired = False
+            reason = ""
+            if end_dt:
+                if end_dt < now:
+                    expired = True
+                    near_expiry = True
+                    reason = "expired"
+                elif now <= end_dt <= window_end:
+                    near_expiry = True
+                    reason = "near_expiry"
+            else:
+                # missing end date triggers search
+                near_expiry = True
+                reason = "missing_end_date"
+
+            if near_expiry:
+                report = await generate_report(c)
+                results.append({
+                    "contract_id": c.get("id"),
+                    "expired_status": reason,
+                    "report": report,
+                })
+
+        return {
+            "success": True,
+            "user_email": user_email,
+            "count": len(results),
+            "data": results,
+            "expiry_window_days": expiry_window_days
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in alert_expiring_contracts: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")

@@ -42,6 +42,13 @@ class Settings(BaseSettings):
     # Logging settings
     log_level: str = Field(default="INFO", env="LOG_LEVEL")
     
+    # OpenAI settings
+    openai_api_key: Optional[str] = Field(default=None, env="OPENAI_API_KEY")
+    openai_model: str = Field(default="gpt-5", env="OPENAI_MODEL")
+    
+    # Expiration settings
+    expiry_warning_days: int = Field(default=60, env="EXPIRY_WARNING_DAYS")
+    
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
