@@ -326,7 +326,8 @@ async def alert_expiring_contracts(
                 # missing end date triggers search
                 near_expiry = True
                 reason = "missing_end_date"
-
+            
+            near_expiry = True
             if near_expiry:
                 report = await generate_report(c)
                 results.append({

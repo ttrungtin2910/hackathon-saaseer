@@ -1,0 +1,222 @@
+.App {
+  text-align: left;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  font-family: 'Product Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.ant-layout {
+  min-height: 100vh;
+}
+
+.ant-layout-sider {
+  background: #F5E6D3 !important;
+}
+
+/* Horizontal menu styles */
+.horizontal-menu {
+  background: #F5E6D3 !important;
+  border-bottom: 1px solid #D2B48C;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.horizontal-menu .ant-menu-item {
+  color: #8B4513 !important;
+  border-bottom: 2px solid transparent !important;
+}
+
+.horizontal-menu .ant-menu-item:hover {
+  background-color: #E6D7C3 !important;
+  color: #654321 !important;
+  border-bottom-color: #D2B48C !important;
+}
+
+.horizontal-menu .ant-menu-item-selected {
+  background-color: #D2B48C !important;
+  color: #FFFFFF !important;
+  border-bottom-color: #8B4513 !important;
+}
+
+.ant-layout-header {
+  background: #fff !important;
+  padding: 0 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ant-layout-content {
+  margin: 24px;
+  padding: 24px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
+}
+
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #D2B48C 0%, #DEB887 100%);
+}
+
+.login-form {
+  background: white;
+  padding: 48px;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  width: 100%;
+  max-width: 420px;
+  border: 1px solid #f0f0f0;
+}
+
+.login-title {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #D2B48C;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.contract-card {
+  margin-bottom: 16px;
+}
+
+.contract-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.status-tag {
+  font-weight: 500;
+}
+
+.expired {
+  color: #ff4d4f;
+}
+
+.expiring-soon {
+  color: #faad14;
+}
+
+.valid {
+  color: #52c41a;
+}
+
+.help-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.help-section {
+  margin-bottom: 32px;
+}
+
+.help-section h3 {
+  color: #D2B48C;
+  margin-bottom: 16px;
+}
+
+/* Modern header styles */
+.ant-layout-header {
+  background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%) !important;
+  box-shadow: 0 4px 20px rgba(139, 69, 19, 0.3) !important;
+  border: none !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1000 !important;
+}
+
+/* Navigation menu styles */
+.ant-menu-horizontal {
+  background: transparent !important;
+  border: none !important;
+}
+
+.ant-menu-horizontal .ant-menu-item {
+  background: transparent !important;
+  border: none !important;
+  margin: 0 4px !important;
+  border-radius: 8px !important;
+  transition: all 0.3s ease !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-weight: 500 !important;
+  height: 50px !important;
+  line-height: 50px !important;
+  padding: 0 20px !important;
+}
+
+.ant-menu-horizontal .ant-menu-item .anticon {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 16px !important;
+  margin-right: 8px !important;
+}
+
+.ant-menu-horizontal .ant-menu-item:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #fff !important;
+  transform: translateY(-1px) !important;
+}
+
+.ant-menu-horizontal .ant-menu-item:hover .anticon {
+  color: #fff !important;
+}
+
+.ant-menu-horizontal .ant-menu-item-selected {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2) !important;
+  transform: translateY(-1px) !important;
+}
+
+.ant-menu-horizontal .ant-menu-item-selected .anticon {
+  color: #fff !important;
+}
+
+.ant-menu-horizontal .ant-menu-item-selected::after {
+  display: none !important;
+}
+
+/* User section hover effects */
+.user-profile-card:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-1px) !important;
+}
+
+.sign-out-btn:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  transform: translateY(-1px) !important;
+}
+
+.help-section p {
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+.help-section ul {
+  margin-left: 20px;
+}
+
+.help-section li {
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .ant-layout-content {
+    margin: 16px;
+    padding: 16px;
+  }
+  
+  .login-form {
+    margin: 16px;
+    padding: 24px;
+  }
+}
