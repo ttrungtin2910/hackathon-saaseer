@@ -353,6 +353,142 @@ async def alert_expiring_contracts(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
+@router.get("/report/{contract_id}", response_model=dict)
+async def generate_contract_report(
+    contract_id: str = Path(..., description="Contract ID to analyze"),
+    user_email: str = Query(..., description="User email (partition key)")
+):
+    """
+    Generate AI-powered analysis report for a specific contract.
+    
+    This endpoint:
+    1. Fetches the contract details
+    2. Analyzes with OpenAI (using web search)
+    3. Returns detailed report with alternatives and recommendations
+    
+    Args:
+        contract_id: ID of the contract to analyze
+        user_email: Email of the user (partition key)
+        
+    Returns:
+        Dictionary with contract analysis report
+    """
+    try:
+        settings = get_settings()
+        
+        # 1) Fetch specific contract
+        logger.info(f"📊 Generating report for contract: {contract_id}")
+        result = await cosmos_db.get_contract(contract_id, user_email)
+        
+        if not result.get("success"):
+            raise HTTPException(status_code=404, detail=f"Contract {contract_id} not found")
+        
+        contract = result.get("data")
+        
+        # Helper: parse date in formats YYYY/MM/DD or ISO
+        def parse_date(value: Optional[str]) -> Optional[datetime]:
+            if not value:
+                return None
+            for fmt in ("%Y/%m/%d", "%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%S.%f"):
+                try:
+                    return datetime.strptime(value, fmt)
+                except Exception:
+                    continue
+            return None
+        
+        # Determine contract status
+        end_dt = parse_date(contract.get("contract_end_date"))
+        now = datetime.utcnow()
+        expiry_window_days = int(settings.expiry_warning_days)
+        window_end = now + timedelta(days=expiry_window_days)
+        
+        expired_status = "unknown"
+        if end_dt:
+            if end_dt < now:
+                expired_status = "expired"
+            elif now <= end_dt <= window_end:
+                expired_status = "near_expiry"
+            else:
+                expired_status = "active"
+        else:
+            expired_status = "missing_end_date"
+        
+        # Build AI prompt
+        from textwrap import dedent
+        
+        fields = {
+            "Service Name": contract.get("service_name"),
+            "Supplier": contract.get("supplier_name"),
+            "Customer": contract.get("customer_name"),
+            "Details": contract.get("contract_details"),
+            "Start Date": contract.get("contract_start_date"),
+            "End Date": contract.get("contract_end_date"),
+            "Termination Notice": contract.get("termination_notice_period"),
+        }
+        lines = [f"- {k}: {v}" for k, v in fields.items() if v]
+        context = "\n".join(lines)
+        
+        prompt = dedent(
+            f"""
+            You are an analyst. Using web search, analyze the current contract context and propose alternatives.
+
+            Current contract context:\n{context}
+
+            Write a 500-800 word markdown report with these sections:
+            1. CURRENT CONTRACT OVERVIEW (analysis, strengths/limitations)
+            2. REQUIREMENTS ANALYSIS (user needs, current suitability)
+            3. SIMILAR SERVICES IN THE MARKET (comparison, pros/cons of each option)
+            4. RECOMMENDATIONS (most suitable solution, implementation roadmap)
+            Output only the report, no preface or meta text. Don't place in code block.
+            Please response as the context's language
+            """
+        ).strip()
+        
+        # Generate report with AI
+        openai_key = settings.openai_api_key
+        model = settings.openai_model
+        
+        if not openai_key:
+            report = (
+                "## TỔNG QUAN HỢP ĐỒNG HIỆN TẠI\n\n"
+                "(Bản xem trước vì thiếu OPENAI_API_KEY)\n\n"
+                "## PHÂN TÍCH YÊU CẦU\n\n"
+                "## DỊCH VỤ TƯƠNG TỰ TRÊN THỊ TRƯỜNG\n\n"
+                "## KHUYẾN NGHỊ\n"
+            )
+        else:
+            try:
+                from openai import OpenAI
+                client = OpenAI(api_key=openai_key)
+                
+                logger.info("🤖 Calling OpenAI API for report generation...")
+                response = client.responses.create(
+                    model=model,
+                    tools=[{"type": "web_search"}],
+                    input=prompt,
+                )
+                report = getattr(response, "output_text", "") or "(Không thể tạo báo cáo.)"
+                logger.info("✅ Report generated successfully")
+                
+            except Exception as e:
+                logger.error(f"❌ AI report generation failed: {e}", exc_info=False)
+                report = f"## LỖI TẠO BÁO CÁO\n\nKhông thể tạo báo cáo tự động: {str(e)}"
+        
+        return {
+            "success": True,
+            "contract_id": contract_id,
+            "expired_status": expired_status,
+            "report": report,
+            "contract": contract
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Unexpected error generating report: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
 @router.post("/upload", response_model=dict, status_code=201)
 async def upload_and_extract_contract(
     file: UploadFile = File(..., description="Contract file (PDF, JPG, PNG, etc.)"),
