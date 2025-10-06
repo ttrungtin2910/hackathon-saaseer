@@ -1,12 +1,15 @@
-from fastapi import APIRouter, HTTPException, Query, Path, Request
+from fastapi import APIRouter, HTTPException, Query, Path, Request, UploadFile, File, Form
 from typing import List, Optional
 from app.models import ContractData, ContractResponse, ContractUpdateData
 from app.database import cosmos_db
+from app.storage_service import storage_service
+from app.extraction_service import extraction_service
 from config.settings import get_settings
 from datetime import datetime, timedelta
 import os
 import logging
 import json
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -348,3 +351,130 @@ async def alert_expiring_contracts(
     except Exception as e:
         logger.error(f"Unexpected error in alert_expiring_contracts: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.post("/upload", response_model=dict, status_code=201)
+async def upload_and_extract_contract(
+    file: UploadFile = File(..., description="Contract file (PDF, JPG, PNG, etc.)"),
+    user_email: str = Form(..., description="User email")
+):
+    """
+    Upload a contract file, extract information using AI, and save to database.
+    
+    This endpoint:
+    1. Uploads the file to Azure Storage
+    2. Extracts contract information using AI (OpenAI GPT-4 Vision)
+    3. Saves the extracted data to Cosmos DB
+    
+    Supported file types: PDF, JPG, JPEG, PNG, GIF, WEBP
+    
+    Args:
+        file: Contract file to upload
+        user_email: Email of the user uploading the contract
+        
+    Returns:
+        Dictionary with success status, extracted contract data, and file URL
+    """
+    try:
+        logger.info(f"📤 Received file upload request: {file.filename} from user: {user_email}")
+        
+        # Validate file type
+        allowed_extensions = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.webp']
+        file_extension = os.path.splitext(file.filename)[1].lower()
+        
+        if file_extension not in allowed_extensions:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Unsupported file type: {file_extension}. Allowed types: {', '.join(allowed_extensions)}"
+            )
+        
+        # Read file content
+        file_content = await file.read()
+        file_size_mb = len(file_content) / (1024 * 1024)
+        logger.info(f"📊 File size: {file_size_mb:.2f} MB")
+        
+        # Check file size (max 10MB)
+        if file_size_mb > 10:
+            raise HTTPException(
+                status_code=400,
+                detail="File size exceeds 10MB limit"
+            )
+        
+        # Step 1: Upload to Azure Storage
+        logger.info("☁️ Step 1: Uploading file to Azure Storage...")
+        upload_success, upload_message, blob_url = storage_service.upload_file(
+            file_content=file_content,
+            file_name=file.filename,
+            content_type=file.content_type or "application/octet-stream",
+            user_email=user_email
+        )
+        
+        if not upload_success:
+            raise HTTPException(status_code=500, detail=upload_message)
+        
+        logger.info(f"✅ File uploaded to: {blob_url}")
+        
+        # Step 2: Extract contract information using AI
+        logger.info("🤖 Step 2: Extracting contract information using AI...")
+        extraction_result = extraction_service.extract_from_file(file_content, file.filename)
+        
+        if not extraction_result["success"]:
+            # Even if extraction fails, we keep the file uploaded
+            logger.warning(f"⚠️ AI extraction failed: {extraction_result['message']}")
+            return {
+                "success": False,
+                "message": "File uploaded but extraction failed",
+                "file_url": blob_url,
+                "extraction_error": extraction_result["message"],
+                "contract_id": None
+            }
+        
+        extracted_data = extraction_result["data"]
+        logger.info("✅ Contract information extracted successfully")
+        
+        # Step 3: Save to Cosmos DB
+        logger.info("💾 Step 3: Saving contract to database...")
+        
+        # Generate unique contract ID
+        contract_id = f"contract_{uuid.uuid4()}"
+        
+        # Create contract data object
+        contract_data = ContractData(
+            id=contract_id,
+            supplier_name=extracted_data.get("supplier_name"),
+            customer_name=extracted_data.get("customer_name"),
+            contract_start_date=extracted_data.get("contract_start_date"),
+            contract_end_date=extracted_data.get("contract_end_date"),
+            termination_notice_period=extracted_data.get("termination_notice_period"),
+            contract_details=extracted_data.get("contract_details"),
+            service_name=extracted_data.get("service_name"),
+            LinkImage=blob_url,
+            UserEmail=user_email,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        
+        # Save to database
+        db_result = await cosmos_db.create_contract(contract_data)
+        
+        if not db_result["success"]:
+            logger.error(f"❌ Failed to save contract to database: {db_result['message']}")
+            raise HTTPException(status_code=500, detail=db_result["message"])
+        
+        logger.info(f"✅ Contract saved to database with ID: {contract_id}")
+        
+        # Return success response
+        return {
+            "success": True,
+            "message": "Contract uploaded, extracted, and saved successfully",
+            "contract_id": contract_id,
+            "file_url": blob_url,
+            "extracted_data": extracted_data,
+            "data": db_result["data"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Unexpected error in upload_and_extract_contract: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

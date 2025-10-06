@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ConfigProvider, theme } from 'antd';
-import viVN from 'antd/locale/vi_VN';
+import enUS from 'antd/locale/en_US';
 import { AuthProvider } from './contexts/AuthContext';
 import { ContractProvider } from './contexts/ContractContext';
 import Login from './pages/Login';
@@ -26,7 +26,7 @@ function App() {
   };
 
   return (
-    <ConfigProvider locale={viVN} theme={customTheme}>
+    <ConfigProvider locale={enUS} theme={customTheme}>
       <AuthProvider>
         <ContractProvider>
           <Router>

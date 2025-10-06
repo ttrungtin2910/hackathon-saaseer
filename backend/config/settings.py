@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     cosmos_database_name: str = Field(default="ContractManagement", env="COSMOS_DATABASE_NAME")
     cosmos_container_name: str = Field(default="contracts", env="COSMOS_CONTAINER_NAME")
     
+    # Azure Storage Account settings
+    azure_sa_url: str = Field(..., env="AZURE_SA_URL")
+    azure_sa_key: str = Field(..., env="AZURE_SA_KEY")
+    azure_container_name: str = Field(..., env="AZURE_CONTAINER_NAME")
+    
     # CORS settings
     cors_origins: list = Field(default=["*"], env="CORS_ORIGINS")
     cors_allow_credentials: bool = Field(default=True, env="CORS_ALLOW_CREDENTIALS")

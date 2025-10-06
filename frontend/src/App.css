@@ -195,6 +195,41 @@
   transform: translateY(-1px) !important;
 }
 
+/* Resizable table styles */
+.react-resizable {
+  position: relative;
+  background-clip: padding-box;
+}
+
+.react-resizable-handle {
+  position: absolute;
+  width: 10px;
+  height: 100%;
+  bottom: 0;
+  right: -5px;
+  cursor: col-resize;
+  z-index: 1;
+  background: transparent;
+  border-right: 2px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.react-resizable-handle:hover {
+  border-right-color: #1890ff;
+}
+
+.react-resizable-handle:active {
+  border-right-color: #40a9ff;
+}
+
+.ant-table-thead > tr > th {
+  position: relative;
+}
+
+.ant-table-thead > tr > th:hover .react-resizable-handle {
+  border-right-color: #d9d9d9;
+}
+
 .help-section p {
   margin-bottom: 12px;
   line-height: 1.6;

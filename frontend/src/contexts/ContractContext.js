@@ -179,6 +179,7 @@ export const ContractProvider = ({ children }) => {
     createContract,
     updateContract,
     deleteContract,
+    refreshContracts: loadContracts, // Alias for refreshing contracts
   };
 
   return (

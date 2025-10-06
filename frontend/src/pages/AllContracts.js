@@ -12,7 +12,8 @@ import {
   Input, 
   DatePicker, 
   message,
-  Popconfirm
+  Popconfirm,
+  Tabs
 } from 'antd';
 import {
   FileTextOutlined,
@@ -25,7 +26,9 @@ import {
   DeleteOutlined,
   EyeOutlined,
   ShopOutlined,
-  UserOutlined
+  UserOutlined,
+  UploadOutlined,
+  FormOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -33,6 +36,8 @@ import { useContract } from '../contexts/ContractContext';
 import ContractDetails from '../components/ContractDetails';
 import ContractRow from '../components/ContractRow';
 import AppHeader from '../components/AppHeader';
+import ResizableTable from '../components/ResizableTable';
+import ContractUpload from '../components/ContractUpload';
 import dayjs from 'dayjs';
 
 const { Header, Sider, Content } = Layout;
@@ -43,8 +48,9 @@ const AllContracts = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
-  const { contracts, loading, createContract, updateContract, deleteContract } = useContract();
+  const { contracts, loading, createContract, updateContract, deleteContract, refreshContracts } = useContract();
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isUploadModalVisible, setIsUploadModalVisible] = useState(false);
   const [editingContract, setEditingContract] = useState(null);
   const [form] = Form.useForm();
 
@@ -93,9 +99,20 @@ const AllContracts = () => {
   };
 
   const handleAddContract = () => {
+    setIsUploadModalVisible(true);
+  };
+
+  const handleManualAddContract = () => {
     setEditingContract(null);
     form.resetFields();
     setIsModalVisible(true);
+    setIsUploadModalVisible(false);
+  };
+
+  const handleUploadSuccess = (result) => {
+    message.success('Contract uploaded and extracted successfully!');
+    refreshContracts();
+    setIsUploadModalVisible(false);
   };
 
   const handleEditContract = (contract) => {
@@ -234,15 +251,36 @@ const AllContracts = () => {
       ),
     },
     {
-      title: 'Notice Period',
-      dataIndex: 'termination_notice_period',
-      key: 'termination_notice_period',
-      width: 300,
+      title: 'Contract Details',
+      dataIndex: 'contract_details',
+      key: 'contract_details',
+      width: 250,
       render: (text) => (
         <Text 
           ellipsis={{ 
             tooltip: text,
             rows: 3 
+          }}
+          style={{ 
+            fontSize: '12px',
+            lineHeight: '1.5',
+            color: '#666'
+          }}
+        >
+          {text || 'Not specified'}
+        </Text>
+      ),
+    },
+    {
+      title: 'Notice Period',
+      dataIndex: 'termination_notice_period',
+      key: 'termination_notice_period',
+      width: 200,
+      render: (text) => (
+        <Text 
+          ellipsis={{ 
+            tooltip: text,
+            rows: 2 
           }}
           style={{ 
             fontSize: '12px',
@@ -306,17 +344,27 @@ const AllContracts = () => {
         <Content style={{ margin: '24px', padding: '24px', background: '#fff', borderRadius: '8px' }}>
           <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Title level={2} style={{ margin: 0, color: '#2c3e50', fontWeight: '600' }}>Contract List</Title>
-            <Button 
-              type="primary" 
-              icon={<PlusOutlined />} 
-              onClick={handleAddContract}
-              style={{ borderRadius: '8px' }}
-            >
-              Add Contract
-            </Button>
+            <Space>
+              <Button 
+                type="default" 
+                icon={<FormOutlined />} 
+                onClick={handleManualAddContract}
+                style={{ borderRadius: '8px' }}
+              >
+                Manual Entry
+              </Button>
+              <Button 
+                type="primary" 
+                icon={<UploadOutlined />} 
+                onClick={handleAddContract}
+                style={{ borderRadius: '8px' }}
+              >
+                Upload Contract
+              </Button>
+            </Space>
           </div>
 
-          <Table
+          <ResizableTable
             columns={columns}
             dataSource={contracts}
             rowKey="id"
@@ -327,7 +375,7 @@ const AllContracts = () => {
               showQuickJumper: true,
               showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} contracts`,
             }}
-            scroll={{ x: 1500 }}
+            scroll={{ x: 1700 }}
             size="middle"
             bordered={false}
             style={{ 
@@ -337,8 +385,15 @@ const AllContracts = () => {
             }}
           />
 
+          <ContractUpload
+            visible={isUploadModalVisible}
+            onClose={() => setIsUploadModalVisible(false)}
+            onSuccess={handleUploadSuccess}
+            userEmail={user?.email}
+          />
+
           <Modal
-            title={editingContract ? 'Edit Contract' : 'Add New Contract'}
+            title={editingContract ? 'Edit Contract' : 'Manual Contract Entry'}
             open={isModalVisible}
             onOk={handleModalOk}
             onCancel={() => setIsModalVisible(false)}
@@ -375,19 +430,27 @@ const AllContracts = () => {
                 <Input placeholder="Enter customer name" />
               </Form.Item>
 
-              <Form.Item
-                name="contract_start_date"
-                label="Start Date"
-              >
-                <DatePicker style={{ width: '100%' }} format="YYYY/MM/DD" />
-              </Form.Item>
-
-              <Form.Item
-                name="contract_end_date"
-                label="End Date"
-              >
-                <DatePicker style={{ width: '100%' }} format="YYYY/MM/DD" />
-              </Form.Item>
+                     <Form.Item
+                       name="contract_start_date"
+                       label="Start Date"
+                     >
+                       <DatePicker 
+                         style={{ width: '100%' }} 
+                         format="YYYY/MM/DD" 
+                         placeholder="Select start date"
+                       />
+                     </Form.Item>
+       
+                     <Form.Item
+                       name="contract_end_date"
+                       label="End Date"
+                     >
+                       <DatePicker 
+                         style={{ width: '100%' }} 
+                         format="YYYY/MM/DD" 
+                         placeholder="Select end date"
+                       />
+                     </Form.Item>
 
               <Form.Item
                 name="contract_details"

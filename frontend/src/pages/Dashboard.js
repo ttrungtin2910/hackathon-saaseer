@@ -10,8 +10,6 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useContract } from '../contexts/ContractContext';
-import ApiStatus from '../components/ApiStatus';
-import ApiTester from '../components/ApiTester';
 import ContractDetails from '../components/ContractDetails';
 import ContractStats from '../components/ContractStats';
 import AppHeader from '../components/AppHeader';
@@ -87,8 +85,6 @@ const Dashboard = () => {
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
           border: '1px solid #f0f0f0'
         }}>
-          <ApiStatus />
-          <ApiTester />
           <Title level={2} style={{ marginBottom: '32px', color: '#2c3e50', fontWeight: '600' }}>
             System Overview
           </Title>

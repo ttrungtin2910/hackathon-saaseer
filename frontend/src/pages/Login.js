@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Card, Typography, message } from 'antd';
-import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import { UserOutlined, LockOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
@@ -32,10 +32,13 @@ const Login = () => {
   return (
     <div className="login-container">
       <Card className="login-form">
-        <Title level={2} className="login-title">
-          SaaSeer
-        </Title>
-        <Title level={4} style={{ textAlign: 'center', marginBottom: 30, color: '#666' }}>
+        <div className="login-header">
+          <FileTextOutlined className="login-icon" />
+          <Title level={2} className="login-title">
+            SaaSeer
+          </Title>
+        </div>
+        <Title level={4} className="login-subtitle">
           Contract Management System
         </Title>
         
